@@ -1,17 +1,13 @@
-#!/bin/bash
+#!/system/bin/sh
+# shellcheck shell=ksh
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-set -euo pipefail
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+export SCRIPT_DIR
 
-function run-iptsd-find-hidraw() {
-	local -r script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+set -uo pipefail
 
-	source "${script_dir}/iptsd-foreach"
+set -- -t touchscreen -i 0 -- echo {}
+source "${SCRIPT_DIR}/iptsd-foreach"
 
-	spdlog warn "iptsd-find-hidraw is deprecated, please use iptsd-foreach"
-	run-iptsd-foreach -t touchscreen -i 0 -- echo {}
-}
-
-if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
-	run-iptsd-find-hidraw "$@"
-fi
+spdlog warn "iptsd-find-hidraw is deprecated, please use iptsd-foreach"

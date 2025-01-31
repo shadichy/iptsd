@@ -44,7 +44,7 @@ function run-iptsd-systemd() {
 	fi
 
 	# shellcheck disable=SC2016
-	run-iptsd-foreach "${foreach_args[@]}" -- \
+	run_iptsd_foreach "${foreach_args[@]}" -- \
 		systemctl "$@" 'iptsd@$(systemd-escape --path "{}").service'
 }
 

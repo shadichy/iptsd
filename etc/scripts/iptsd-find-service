@@ -1,18 +1,12 @@
-#!/bin/bash
+#!/system/bin/sh
+# shellcheck shell=ksh
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 set -euo pipefail
 
-# shellcheck disable=SC2016
-function run-iptsd-find-service() {
-	local -r script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 
-	source "${script_dir}/iptsd-foreach"
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+export SCRIPT_DIR
 
-	spdlog warn "iptsd-find-service is deprecated, please use iptsd-systemd"
-	run-iptsd-foreach -t touchscreen -i 0 -- echo 'iptsd@$(systemd-escape --path "{}").service'
-}
-
-if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
-	run-iptsd-find-service "$@"
-fi
+set -- -t touchscreen -i 0 -- echo 'iptsd@$(systemd-escape --path "{}").service'
+source "${SCRIPT_DIR}/iptsd-foreach"
