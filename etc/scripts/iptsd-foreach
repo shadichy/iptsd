@@ -136,7 +136,7 @@ run_iptsd_foreach() {
 	done <<<"$(find /dev -maxdepth 1 | grep -E "hidraw[0-9]+" | sort)"
 
 	# If no devices were found, exit
-	if [ ! "${devices[@]}" ]; then
+	if ((${#devices[@]} == 0)); then
 		spdlog info "No devices found"
 		return 0
 	fi
