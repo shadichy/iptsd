@@ -45,10 +45,10 @@ find_program() {
 	# Otherwise the script might be called from the cloned git repository
 	if [ -n "${project_dir}" ] && [ -f "${project_dir}/meson_options.txt" ]; then
 		local file
-		file="$(find "${project_dir}" -type f -executable -name "${name}" | head -n1)"
+		file="$(find "${project_dir}" -type f -perm -554 -name "${name}" | head -n1)"
 
 		if print_if_executable "${file}"; then
-			spdlog info "Located ${name} at ./$(realpath --relative-to="${PWD}" "${file}")"
+			spdlog info "Located ${name} at $(realpath "${file}")"
 			return 0
 		fi
 	fi
@@ -69,46 +69,31 @@ run_iptsd_foreach() {
 
 	local device_index=""
 	local device_type="any"
-	local xargs_procs="1"
-	local tmux_socket=""
 	local show_help=""
 
 	while getopts ":t:i:pmh" args; do
 		case "${args}" in
 		i) device_index="${OPTARG}" ;;
 		t) device_type="${OPTARG}" ;;
-		p) xargs_procs="0" ;;
-		m) xargs_procs="0" && tmux_socket="$(mktemp -u)" ;;
 		*) show_help="1" ;;
 		esac
 	done
 
-	shift $((OPTIND - 1))
+	shift $OPTIND
 
 	if [ "$*" = "" ]; then
 		show_help="1"
 	fi
 
 	if [ -n "${show_help}" ]; then
-		echo "Usage: iptsd-foreach [OPTIONS] -- COMMAND"
-		echo "Run commands on all IPTS devices"
-		echo ""
-		echo "The string that is passed as COMMAND is executed in a bash shell."
-		echo "Every occurence of {} will be replaced with the selected device."
+		echo "Usage: iptsd-foreach [OPTIONS]"
+		echo "Find IPTS devices"
 		echo ""
 		echo "Options:"
 		echo "  -h                                   Print this help message and exit"
 		echo "  -t  TEXT:{any,touchscreen,touchpad}  Selects all devices with the given type"
 		echo "  -i  INTEGER                          Selects a single device by its index"
-		echo "  -p                                   Run all commands in parallel"
-		echo "  -m                                   Like -p, but runs every instance in seperate tmux windows"
-
 		return 0
-	fi
-
-	if [ -n "${tmux_socket}" ] && [ ! -x "$(command -v tmux)" ]; then
-		spdlog error "tmux is not installed"
-		return 1
 	fi
 
 	local check_device
@@ -150,41 +135,10 @@ run_iptsd_foreach() {
 		devices=("${devices[${device_index}]}")
 	fi
 
-	# Ignore the tmux option if there is only one device
-	if ((${#devices[@]} == 1)); then
-		tmux_socket=""
-	fi
-
-	local xargs_cmd
-	xargs_cmd=("bash" "-c" "$*")
-
-	if [ -n "${tmux_socket}" ]; then
-		xargs_cmd=("tmux" "-S" "${tmux_socket}" "new-window" "-n" "{}" "${xargs_cmd[@]}")
-		tmux -S "${tmux_socket}" new-session -d -n iptsd
-	fi
-
-	# Save existing traps
-	local saved_traps
-	saved_traps="$(trap)"
-
-	# Ignore SIGINT and SIGTERM, these have to be handled by xargs / iptsd
-	trap -- "" SIGINT
-	trap -- "" SIGTERM
-
-	# Run the supplied commands on all devices
-	echo -n "${devices[@]}" | xargs -d ' ' -P "${xargs_procs}" -i "${xargs_cmd[@]}"
-
-	# Restore SIGINT and SIGTERM to their defaults
-	trap -- - SIGINT
-	trap -- - SIGTERM
-
-	# Restore previous traps
-	eval "${saved_traps}"
-
-	if [ -n "${tmux_socket}" ]; then
-		tmux -S "${tmux_socket}" kill-window -t 0
-		tmux -S "${tmux_socket}" attach
-	fi
+	local dev
+	for dev in "${devices[@]}"; do
+		echo -n "$dev"
+	done
 
 	return 0
 }

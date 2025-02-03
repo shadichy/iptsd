@@ -7,7 +7,7 @@ export SCRIPT_DIR
 
 set -uo pipefail
 
-set -- -t touchscreen -i 0 -- echo {}
-source "${SCRIPT_DIR}/iptsd-foreach"
+set -- -t touchscreen -i 0
+source "${SCRIPT_DIR}/iptsd-find"
 
 spdlog warn "iptsd-find-hidraw is deprecated, please use iptsd-foreach"
