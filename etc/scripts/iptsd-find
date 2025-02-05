@@ -79,14 +79,12 @@ run_iptsd_foreach() {
 		esac
 	done
 
-	shift $OPTIND
-
 	if [ "$*" = "" ]; then
 		show_help="1"
 	fi
 
 	if [ -n "${show_help}" ]; then
-		echo "Usage: iptsd-foreach [OPTIONS]"
+		echo "Usage: $0 [OPTIONS]"
 		echo "Find IPTS devices"
 		echo ""
 		echo "Options:"
